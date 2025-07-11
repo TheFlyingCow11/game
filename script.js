@@ -1,6 +1,138 @@
-// ... קוד הג'ויסטיקים מהתגובה הקודמת נשאר בדיוק כמו שהוא ...
+// --- ג'ויסטיקים, ללא שינוי מהתגובות הקודמות ---
+const joystick1 = document.createElement('div');
+const joystick2 = document.createElement('div');
+const stick1 = document.createElement('div');
+const stick2 = document.createElement('div');
 
-// המשך הקוד שלך...
+Object.assign(joystick1.style, {
+  position: 'fixed',
+  left: '30px',
+  bottom: '30px',
+  width: '100px',
+  height: '100px',
+  background: 'rgba(200,200,200,0.1)',
+  borderRadius: '50%',
+  zIndex: 10,
+  touchAction: 'none',
+});
+Object.assign(joystick2.style, {
+  position: 'fixed',
+  right: '30px',
+  bottom: '30px',
+  width: '100px',
+  height: '100px',
+  background: 'rgba(200,200,200,0.1)',
+  borderRadius: '50%',
+  zIndex: 10,
+  touchAction: 'none',
+});
+Object.assign(stick1.style, {
+  position: 'absolute',
+  left: '35px',
+  top: '35px',
+  width: '30px',
+  height: '30px',
+  background: 'rgba(255,0,0,0.5)',
+  borderRadius: '50%',
+  zIndex: 11,
+  pointerEvents: 'none',
+});
+Object.assign(stick2.style, {
+  position: 'absolute',
+  left: '35px',
+  top: '35px',
+  width: '30px',
+  height: '30px',
+  background: 'rgba(0,255,0,0.5)',
+  borderRadius: '50%',
+  zIndex: 11,
+  pointerEvents: 'none',
+});
+joystick1.appendChild(stick1);
+joystick2.appendChild(stick2);
+document.body.appendChild(joystick1);
+document.body.appendChild(joystick2);
+
+let joy1Active = false, joy2Active = false;
+let joy1Start = { x: 0, y: 0 }, joy2Start = { x: 0, y: 0 };
+let joy1Val = { x: 0, y: 0 }, joy2Val = { x: 0, y: 0 };
+
+joystick1.addEventListener('touchstart', e => {
+  e.preventDefault();
+  joy1Active = true;
+  const t = e.targetTouches[0];
+  const rect = joystick1.getBoundingClientRect();
+  joy1Start.x = t.clientX - rect.left;
+  joy1Start.y = t.clientY - rect.top;
+}, { passive: false });
+
+joystick1.addEventListener('touchmove', e => {
+  if (!joy1Active) return;
+  const t = e.targetTouches[0];
+  const rect = joystick1.getBoundingClientRect();
+  let dx = t.clientX - rect.left - joy1Start.x;
+  let dy = t.clientY - rect.top - joy1Start.y;
+  const max = 35;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if (dist > max) {
+    dx = dx / dist * max;
+    dy = dy / dist * max;
+  }
+  stick1.style.left = 35 + dx + 'px';
+  stick1.style.top = 35 + dy + 'px';
+  joy1Val.x = dx / max;
+  joy1Val.y = dy / max;
+}, { passive: false });
+
+joystick1.addEventListener('touchend', e => {
+  joy1Active = false;
+  stick1.style.left = '35px';
+  stick1.style.top = '35px';
+  joy1Val.x = 0;
+  joy1Val.y = 0;
+}, { passive: false });
+
+joystick2.addEventListener('touchstart', e => {
+  e.preventDefault();
+  joy2Active = true;
+  const t = e.targetTouches[0];
+  const rect = joystick2.getBoundingClientRect();
+  joy2Start.x = t.clientX - rect.left;
+  joy2Start.y = t.clientY - rect.top;
+}, { passive: false });
+
+joystick2.addEventListener('touchmove', e => {
+  if (!joy2Active) return;
+  const t = e.targetTouches[0];
+  const rect = joystick2.getBoundingClientRect();
+  let dx = t.clientX - rect.left - joy2Start.x;
+  let dy = t.clientY - rect.top - joy2Start.y;
+  const max = 35;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if (dist > max) {
+    dx = dx / dist * max;
+    dy = dy / dist * max;
+  }
+  stick2.style.left = 35 + dx + 'px';
+  stick2.style.top = 35 + dy + 'px';
+  joy2Val.x = dx / max;
+  joy2Val.y = dy / max;
+}, { passive: false });
+
+joystick2.addEventListener('touchend', e => {
+  joy2Active = false;
+  stick2.style.left = '35px';
+  stick2.style.top = '35px';
+  joy2Val.x = 0;
+  joy2Val.y = 0;
+}, { passive: false });
+
+// --- סוף קוד הג'ויסטיק ---
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
 class Player {
   constructor(x, y, color) {
@@ -9,6 +141,8 @@ class Player {
     this.radius = 30;
     this.color = color;
     this.hitCount = 0;
+    // לא חובה, אבל נשתמש בו לזיהוי
+    this.id = color === 'red' ? 1 : 2;
   }
 
   draw() {
@@ -27,13 +161,13 @@ class Player {
 }
 
 class Projectile {
-  constructor(x, y, vx, vy, owner) {
+  constructor(x, y, vx, vy, ownerId) {
     this.x = x;
     this.y = y;
     this.vx = vx;
     this.vy = vy;
     this.radius = 10;
-    this.owner = owner; // מזהה של השחקן שירה
+    this.ownerId = ownerId; // מזהה השחקן שירה
   }
 
   move() {
@@ -57,7 +191,7 @@ let orbs = [];
 function spawnOrb() {
   const x = Math.random() * canvas.width * 0.8 + canvas.width * 0.1;
   const y = Math.random() * canvas.height * 0.8 + canvas.height * 0.1;
-  orbs.push({ x, y, radius: 15, owner: null }); // owner=null בהתחלה
+  orbs.push({ x, y, radius: 15, shotBy: null }); // shotBy=null בהתחלה
 }
 setInterval(spawnOrb, 2000);
 
@@ -66,20 +200,21 @@ let keys = {};
 window.addEventListener('keydown', e => keys[e.key] = true);
 window.addEventListener('keyup', e => keys[e.key] = false);
 
-function shoot(from, to, shooter) {
+function shoot(from, to, shooterId) {
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   const mag = Math.sqrt(dx*dx + dy*dy);
+  if (mag === 0) return;
   const speed = 7;
   const vx = (dx / mag) * speed;
   const vy = (dy / mag) * speed;
-  projectiles.push(new Projectile(from.x, from.y, vx, vy, shooter)); // שמירת היורה
+  projectiles.push(new Projectile(from.x, from.y, vx, vy, shooterId));
 }
 
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // תנועה עם ג'ויסטיקים (או מקשים)
+  // --- תנועה עם ג'ויסטיקים (או מקשים), גם רוחב וגם גובה ---
   // שחקן 1
   let p1MoveY = 0, p1MoveX = 0;
   if (Math.abs(joy1Val.y) > 0.2) {
@@ -132,16 +267,16 @@ function gameLoop() {
     ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
     ctx.fill();
 
-    // בדיקת התנגשות עם שחקן
-    for (let idx = 0; idx < 2; idx++) {
-      const player = idx === 0 ? p1 : p2;
-      // אם הכדור לא נגע בשחקן הזה
-      if (orb.owner === null && Math.sqrt((orb.x - player.x) ** 2 + (orb.y - player.y) ** 2) < orb.radius + player.radius) {
-        // ירי!
-        const target = player === p1 ? p2 : p1;
-        shoot(player, target, idx + 1); // 1=אדום, 2=ירוק
-        orb.owner = idx + 1; // משייכים את הכדור לשחקן שנגע בו
-        break;
+    // רק אם הכדור עדיין לא נורה (shotBy === null) נבדוק התנגשות עם שחקן
+    if (orb.shotBy === null) {
+      if (Math.sqrt((orb.x - p1.x) ** 2 + (orb.y - p1.y) ** 2) < orb.radius + p1.radius) {
+        // שחקן 1 ירה את הכדור על שחקן 2
+        shoot(p1, p2, p1.id);
+        orb.shotBy = p1.id;
+      } else if (Math.sqrt((orb.x - p2.x) ** 2 + (orb.y - p2.y) ** 2) < orb.radius + p2.radius) {
+        // שחקן 2 ירה את הכדור על שחקן 1
+        shoot(p2, p1, p2.id);
+        orb.shotBy = p2.id;
       }
     }
   }
@@ -152,16 +287,27 @@ function gameLoop() {
     proj.move();
     proj.draw();
 
-    // פגיעה, רק אם לא פוגע ביורה
-    if (proj.owner !== 1 && p1.isHitBy(proj)) {
+    // פגיעה: קליע לא פוגע ביורה שלו, רק ביריב!
+    if (proj.ownerId !== p1.id && p1.isHitBy(proj)) {
       p1.hitCount++;
       projectiles.splice(i, 1);
       continue;
     }
-    if (proj.owner !== 2 && p2.isHitBy(proj)) {
+    if (proj.ownerId !== p2.id && p2.isHitBy(proj)) {
       p2.hitCount++;
       projectiles.splice(i, 1);
       continue;
+    }
+    // מחיקה אם יצא מהמסך
+    if (proj.x < -50 || proj.x > canvas.width + 50 || proj.y < -50 || proj.y > canvas.height + 50) {
+      projectiles.splice(i, 1);
+    }
+  }
+
+  // הסרה של כדורים כתומים שכבר נורו (shotBy !== null)
+  for (let i = orbs.length - 1; i >= 0; i--) {
+    if (orbs[i].shotBy !== null) {
+      orbs.splice(i, 1);
     }
   }
 
