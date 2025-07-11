@@ -165,9 +165,6 @@ function gameLoop() {
     }
   }
 
-  // עדכון כדורים כתומים - רק כאשר נוגעים בהם בפעם הראשונה
-  orbs = orbs.filter(orb => orb.owner === null);
-
   // בדיקת ניצחון
   if (p1.hitCount >= 3) {
     alert('הירוק ניצח!');
