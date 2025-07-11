@@ -1,3 +1,144 @@
+// ------ קוד הג'ויסטיקים מתחיל כאן ------
+
+// יצירת אלמנטים לג'ויסטיקים
+const joystick1 = document.createElement('div');
+const joystick2 = document.createElement('div');
+const stick1 = document.createElement('div');
+const stick2 = document.createElement('div');
+
+// עיצוב כללי של הג'ויסטיקים
+Object.assign(joystick1.style, {
+  position: 'fixed',
+  left: '30px',
+  bottom: '30px',
+  width: '100px',
+  height: '100px',
+  background: 'rgba(200,200,200,0.1)',
+  borderRadius: '50%',
+  zIndex: 10,
+  touchAction: 'none',
+});
+Object.assign(joystick2.style, {
+  position: 'fixed',
+  right: '30px',
+  bottom: '30px',
+  width: '100px',
+  height: '100px',
+  background: 'rgba(200,200,200,0.1)',
+  borderRadius: '50%',
+  zIndex: 10,
+  touchAction: 'none',
+});
+Object.assign(stick1.style, {
+  position: 'absolute',
+  left: '35px',
+  top: '35px',
+  width: '30px',
+  height: '30px',
+  background: 'rgba(255,0,0,0.5)',
+  borderRadius: '50%',
+  zIndex: 11,
+  pointerEvents: 'none',
+});
+Object.assign(stick2.style, {
+  position: 'absolute',
+  left: '35px',
+  top: '35px',
+  width: '30px',
+  height: '30px',
+  background: 'rgba(0,255,0,0.5)',
+  borderRadius: '50%',
+  zIndex: 11,
+  pointerEvents: 'none',
+});
+joystick1.appendChild(stick1);
+joystick2.appendChild(stick2);
+document.body.appendChild(joystick1);
+document.body.appendChild(joystick2);
+
+// משתנים למעקב אחרי מצב הג'ויסטיקים
+let joy1Active = false, joy2Active = false;
+let joy1Start = { x: 0, y: 0 }, joy2Start = { x: 0, y: 0 };
+let joy1Val = { x: 0, y: 0 }, joy2Val = { x: 0, y: 0 };
+
+// מאזינים לג'ויסטיק 1 (שחקן 1)
+joystick1.addEventListener('touchstart', e => {
+  e.preventDefault();
+  joy1Active = true;
+  const t = e.targetTouches[0];
+  const rect = joystick1.getBoundingClientRect();
+  joy1Start.x = t.clientX - rect.left;
+  joy1Start.y = t.clientY - rect.top;
+}, { passive: false });
+
+joystick1.addEventListener('touchmove', e => {
+  if (!joy1Active) return;
+  const t = e.targetTouches[0];
+  const rect = joystick1.getBoundingClientRect();
+  let dx = t.clientX - rect.left - joy1Start.x;
+  let dy = t.clientY - rect.top - joy1Start.y;
+  // תחום מקסימלי
+  const max = 35;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if (dist > max) {
+    dx = dx / dist * max;
+    dy = dy / dist * max;
+  }
+  stick1.style.left = 35 + dx + 'px';
+  stick1.style.top = 35 + dy + 'px';
+  // ערך נורמלי בין -1 ל-1
+  joy1Val.x = dx / max;
+  joy1Val.y = dy / max;
+}, { passive: false });
+
+joystick1.addEventListener('touchend', e => {
+  joy1Active = false;
+  stick1.style.left = '35px';
+  stick1.style.top = '35px';
+  joy1Val.x = 0;
+  joy1Val.y = 0;
+}, { passive: false });
+
+// מאזינים לג'ויסטיק 2 (שחקן 2)
+joystick2.addEventListener('touchstart', e => {
+  e.preventDefault();
+  joy2Active = true;
+  const t = e.targetTouches[0];
+  const rect = joystick2.getBoundingClientRect();
+  joy2Start.x = t.clientX - rect.left;
+  joy2Start.y = t.clientY - rect.top;
+}, { passive: false });
+
+joystick2.addEventListener('touchmove', e => {
+  if (!joy2Active) return;
+  const t = e.targetTouches[0];
+  const rect = joystick2.getBoundingClientRect();
+  let dx = t.clientX - rect.left - joy2Start.x;
+  let dy = t.clientY - rect.top - joy2Start.y;
+  const max = 35;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  if (dist > max) {
+    dx = dx / dist * max;
+    dy = dy / dist * max;
+  }
+  stick2.style.left = 35 + dx + 'px';
+  stick2.style.top = 35 + dy + 'px';
+  joy2Val.x = dx / max;
+  joy2Val.y = dy / max;
+}, { passive: false });
+
+joystick2.addEventListener('touchend', e => {
+  joy2Active = false;
+  stick2.style.left = '35px';
+  stick2.style.top = '35px';
+  joy2Val.x = 0;
+  joy2Val.y = 0;
+}, { passive: false });
+
+// ------ קוד הג'ויסטיקים מסתיים כאן ------
+
+// שאר הקוד שלך...
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
@@ -79,11 +220,26 @@ function shoot(from, to) {
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // תנועה
-  if (keys['w']) p1.y -= 5;
-  if (keys['s']) p1.y += 5;
-  if (keys['ArrowUp']) p2.y -= 5;
-  if (keys['ArrowDown']) p2.y += 5;
+  // תנועה עם ג'ויסטיקים (או מקשים)
+  // שחקן 1
+  let p1Move = 0;
+  if (Math.abs(joy1Val.y) > 0.2) {
+    p1Move = joy1Val.y * 5;
+  } else {
+    if (keys['w']) p1Move -= 5;
+    if (keys['s']) p1Move += 5;
+  }
+  p1.y += p1Move;
+
+  // שחקן 2
+  let p2Move = 0;
+  if (Math.abs(joy2Val.y) > 0.2) {
+    p2Move = joy2Val.y * 5;
+  } else {
+    if (keys['ArrowUp']) p2Move -= 5;
+    if (keys['ArrowDown']) p2Move += 5;
+  }
+  p2.y += p2Move;
 
   // גבולות מסך
   p1.y = Math.max(p1.radius, Math.min(canvas.height - p1.radius, p1.y));
