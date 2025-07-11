@@ -2,9 +2,28 @@
 <html lang="he">
 <head>
   <meta charset="UTF-8">
+  <title>משחק ג'ויסטיקים</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>moo</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #222;
+      height: 100%;
+      width: 100%;
+    }
+    #gameCanvas {
+      position: fixed;
+      left: 0; top: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      background: #111;
+      display: block;
+      touch-action: none;
+    }
+  </style>
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
