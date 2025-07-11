@@ -1,13 +1,14 @@
-// --- קוד ג'ויסטיקים --- //
+// --- קוד ג'ויסטיקים עם מיקומים חדשים --- //
 const joystick1 = document.createElement('div');
 const joystick2 = document.createElement('div');
 const stick1 = document.createElement('div');
 const stick2 = document.createElement('div');
 
+// אדום - פינה ימנית עליונה
 Object.assign(joystick1.style, {
   position: 'fixed',
-  left: '30px',
-  bottom: '30px',
+  right: '30px',
+  top: '30px',
   width: '100px',
   height: '100px',
   background: 'rgba(200,200,200,0.1)',
@@ -15,9 +16,10 @@ Object.assign(joystick1.style, {
   zIndex: 10,
   touchAction: 'none',
 });
+// ירוק - פינה שמאלית תחתונה
 Object.assign(joystick2.style, {
   position: 'fixed',
-  right: '30px',
+  left: '30px',
   bottom: '30px',
   width: '100px',
   height: '100px',
@@ -210,6 +212,22 @@ function shoot(from, to, shooterId) {
   projectiles.push(new Projectile(from.x, from.y, vx, vy, shooterId));
 }
 
+function wrapPlayer(player) {
+  // Pacman map wrapping
+  if (player.x < -player.radius) {
+    player.x = canvas.width + player.radius;
+  }
+  if (player.x > canvas.width + player.radius) {
+    player.x = -player.radius;
+  }
+  if (player.y < -player.radius) {
+    player.y = canvas.height + player.radius;
+  }
+  if (player.y > canvas.height + player.radius) {
+    player.y = -player.radius;
+  }
+}
+
 function gameLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -248,11 +266,9 @@ function gameLoop() {
   p2.x += p2MoveX;
   p2.y += p2MoveY;
 
-  // גבולות מסך
-  p1.y = Math.max(p1.radius, Math.min(canvas.height - p1.radius, p1.y));
-  p1.x = Math.max(p1.radius, Math.min(canvas.width - p1.radius, p1.x));
-  p2.y = Math.max(p2.radius, Math.min(canvas.height - p2.radius, p2.y));
-  p2.x = Math.max(p2.radius, Math.min(canvas.width - p2.radius, p2.x));
+  // --- Pacman wrapping לשחקנים ---
+  wrapPlayer(p1);
+  wrapPlayer(p2);
 
   // ציור שחקנים
   p1.draw();
@@ -297,8 +313,13 @@ function gameLoop() {
       projectiles.splice(i, 1);
       continue;
     }
-    // מחיקה אם יצא מהמסך
-    if (proj.x < -50 || proj.x > canvas.width + 50 || proj.y < -50 || proj.y > canvas.height + 50) {
+    // מחיקה אם יצא מהמסך (לא עובר לצד השני)
+    if (
+      proj.x < -proj.radius ||
+      proj.x > canvas.width + proj.radius ||
+      proj.y < -proj.radius ||
+      proj.y > canvas.height + proj.radius
+    ) {
       projectiles.splice(i, 1);
     }
   }
