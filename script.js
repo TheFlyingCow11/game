@@ -1,4 +1,4 @@
-// --- ג'ויסטיקים, ללא שינוי מהתגובות הקודמות ---
+// --- קוד ג'ויסטיקים --- //
 const joystick1 = document.createElement('div');
 const joystick2 = document.createElement('div');
 const stick1 = document.createElement('div');
@@ -127,7 +127,7 @@ joystick2.addEventListener('touchend', e => {
   joy2Val.y = 0;
 }, { passive: false });
 
-// --- סוף קוד הג'ויסטיק ---
+// --- סוף קוד ג'ויסטיקים --- //
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -141,7 +141,6 @@ class Player {
     this.radius = 30;
     this.color = color;
     this.hitCount = 0;
-    // לא חובה, אבל נשתמש בו לזיהוי
     this.id = color === 'red' ? 1 : 2;
   }
 
@@ -191,7 +190,7 @@ let orbs = [];
 function spawnOrb() {
   const x = Math.random() * canvas.width * 0.8 + canvas.width * 0.1;
   const y = Math.random() * canvas.height * 0.8 + canvas.height * 0.1;
-  orbs.push({ x, y, radius: 15, shotBy: null }); // shotBy=null בהתחלה
+  orbs.push({ x, y, radius: 15, shotBy: null });
 }
 setInterval(spawnOrb, 2000);
 
