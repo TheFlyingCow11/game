@@ -233,6 +233,7 @@ function gameLoop() {
 
   // --- תנועה עם ג'ויסטיקים (או מקשים), גם רוחב וגם גובה ---
   // שחקן 1
+// שחקן 1 (אדום)
   let p1MoveY = 0, p1MoveX = 0;
   if (Math.abs(joy1Val.y) > 0.2) {
     p1MoveY = joy1Val.y * 5;
